@@ -12,7 +12,7 @@ ENV JWT_SECRET_KEY=JWT_SECRET_KEY
 ENV GEMINI_API_KEY=GEMINI_API_KEY
 
 # Expose the Spring Boot default port
-EXPOSE 8080
+EXPOSE 8081
 
 # Run the application with system properties
 ENTRYPOINT ["sh", "-c", "java -DJWT_SECRET_KEY=$JWT_SECRET_KEY -DGEMINI_API_KEY=$GEMINI_API_KEY -jar app.jar"]
