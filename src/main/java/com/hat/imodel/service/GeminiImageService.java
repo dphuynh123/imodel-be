@@ -67,6 +67,7 @@ public class GeminiImageService {
     }
 
     private String handleApiResponse(Map<String, Object> response) {
+        log.info("Going to handleApiResponse");
         // Handle blocking
         if (response.containsKey("promptFeedback")) {
             Map<String, Object> promptFeedback = (Map<String, Object>) response.get("promptFeedback");
@@ -122,6 +123,7 @@ public class GeminiImageService {
 
         KeyItem key = keyItem.stream().filter(z -> z.getKey().equals(apiKey)).findFirst().orElseThrow();
         Assert.isTrue(key.getCountDown() > 0 , "Out of limit token");
+        log.info("Going to generateModelImage for api key - {}",apiKey);
 
         Map<String, Object> userImagePart = fileToInlineData(userImage);
         String prompt = """
