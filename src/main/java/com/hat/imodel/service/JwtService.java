@@ -31,7 +31,6 @@ public class JwtService {
         // This method will be called after MyService is constructed
         // and myDependency is injected.
         secretKey = Optional.ofNullable(System.getProperty("JWT_SECRET_KEY")).orElse("3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b");
-
         log.info("secretKey is {}",secretKey);
 
     }
