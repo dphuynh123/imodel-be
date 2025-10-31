@@ -34,4 +34,10 @@ public class GeminiController {
     ) throws Exception {
         return geminiService.generatePoseVariation(tryOnImageUrl, poseInstruction);
     }
+
+
+    @GetMapping("/ping")
+    public String test() {
+        return "pong";
+    }
 }

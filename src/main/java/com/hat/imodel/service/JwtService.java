@@ -1,5 +1,7 @@
 package com.hat.imodel.service;
 
+import com.hat.imodel.entity.User;
+import com.hat.imodel.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -23,8 +25,14 @@ import java.util.function.Function;
 public class JwtService {
     private String secretKey;
 
+    private final UserRepository userRepository;
+
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
+
+    public JwtService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @PostConstruct
     public void init() {
@@ -39,16 +47,20 @@ public class JwtService {
         return (String) extractClaim(token,(claims) -> claims).get("userName");
     }
 
+    public String extractEmail(String token) {
+        return (String) extractClaim(token,(claims) -> claims).get("email");
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(Map.of("userName",userDetails.getUsername())), userDetails);
+    public String generateToken(User userDetails) {
+        return generateToken(new HashMap<>(Map.of("email",userDetails.getEmail())));
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    public String generateToken(Map<String, Object> extraClaims) {
         return buildToken(extraClaims, jwtExpiration);
     }
 
@@ -69,9 +81,10 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    public boolean isTokenValid(String token, String userEmail) {
+        final String email = extractEmail(token);
+        User user = userRepository.findByEmail(email);
+        return (userEmail.equals(user.getEmail())) && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {
