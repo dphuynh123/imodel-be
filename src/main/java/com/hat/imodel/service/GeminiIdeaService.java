@@ -27,6 +27,7 @@ public class GeminiIdeaService {
     @PostConstruct
     public void init() {
         apiKey = System.getenv("GEMINI_API_KEY");
+        
         if (apiKey == null || apiKey.isEmpty()) {
             log.warn("GEMINI_API_KEY environment variable is not set.");
         } else {
