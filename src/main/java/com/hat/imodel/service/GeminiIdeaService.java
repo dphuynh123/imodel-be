@@ -36,6 +36,9 @@ public class GeminiIdeaService {
     }
 
     public MindMapData generateBusinessMindMap(IdeaInput ideaInput) {
+
+        log.info("Generating business mind map with prompt: {}", ideaInput.getPrompt());
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
