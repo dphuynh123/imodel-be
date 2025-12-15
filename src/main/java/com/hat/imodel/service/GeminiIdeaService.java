@@ -24,6 +24,16 @@ public class GeminiIdeaService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @PostConstruct
+    public void init() {
+        apiKey = System.getenv("GEMINI_API_KEY");
+        if (apiKey == null || apiKey.isEmpty()) {
+            log.warn("GEMINI_API_KEY environment variable is not set.");
+        } else {
+            log.info("GEMINI_API_KEY is set.");
+        }
+    }
+
     public MindMapData generateBusinessMindMap(IdeaInput ideaInput) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

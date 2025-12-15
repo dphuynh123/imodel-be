@@ -21,7 +21,8 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: jdbc:mysql://mysql:3306/imodel?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DATABASE_URL: jdbc:mysql://mysql:3306/imodel?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UT
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     networks:
       - backend-gemini-eco-system
     ports:
