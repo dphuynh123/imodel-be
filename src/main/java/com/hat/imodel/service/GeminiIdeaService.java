@@ -61,7 +61,7 @@ public class GeminiIdeaService {
 
         // Build URI with API key if required
         String uri = UriComponentsBuilder.fromHttpUrl("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent")
-                .queryParam("key", "AIzaSyC7RIXYZKDlq0SUfzp5M6eILb9nFDGbU2Q")
+                .queryParam("key", apiKey)
                 .toUriString();
 
         try {
