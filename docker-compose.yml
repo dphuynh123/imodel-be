@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   mysql:
@@ -15,8 +14,19 @@ services:
     volumes:
       - ./mysql_data:/var/lib/mysql
     networks:
-      - backend
+      - backend-gemini-eco-system
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: jdbc:mysql://mysql:3306/imodel?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    networks:
+      - backend-gemini-eco-system
+    ports:
+      - "8081:8081"
 
 networks:
-  backend:
+  backend-gemini-eco-system:
     driver: bridge

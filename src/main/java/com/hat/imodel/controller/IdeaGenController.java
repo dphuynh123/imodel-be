@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api-gemini")
+@RequestMapping("/idea-app")
 public class IdeaGenController {
 
     private final GeminiIdeaService geminiIdeaService;
 
-    @PostMapping("/idea-gen")
+    @PostMapping("/gen")
     public MindMapData generateBusinessIdea(@RequestBody IdeaInput ideaInput) throws Exception {
         return geminiIdeaService.generateBusinessMindMap(ideaInput);
     }
