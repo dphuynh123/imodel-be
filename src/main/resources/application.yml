@@ -27,7 +27,7 @@ spring:
 
 security:
   jwt:
-    expiration-time: 3600000
+    expiration-time: 6000000
 
 logging:
   level:

@@ -1,10 +1,7 @@
 package com.hat.imodel.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,14 +19,11 @@ import java.util.List;
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(nullable = false, length = 255)
+    private String email;
 
     @Column(nullable = false, length = 100)
     private String username;
-
-    @Column(nullable = false, length = 255)
-    private String email;
 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
@@ -38,6 +32,9 @@ public class User implements UserDetails {
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @Column(name = "point", nullable = false)
+    private Integer point = 0;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

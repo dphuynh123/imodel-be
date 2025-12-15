@@ -1,14 +1,18 @@
 package com.hat.imodel.service;
 
+import com.hat.imodel.entity.User;
 import com.hat.imodel.model.KeyItem;
+import com.hat.imodel.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,6 +30,8 @@ public class GeminiImageService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private final UserRepository userRepository;
+
     private List<KeyItem> keyItem = new ArrayList<>(List.of(
             KeyItem.builder().key("ASDAOWIJDIADA").countDown(5).build(),
             KeyItem.builder().key("QWEIQUWOEUOAWD").countDown(5).build(),
@@ -35,9 +41,14 @@ public class GeminiImageService {
             KeyItem.builder().key("1OIJOLJIASDKMCL").countDown(5).build()
     ));
 
+    public GeminiImageService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+
     @PostConstruct
     public void init() {
-        apiKey = Optional.ofNullable(System.getProperty("GEMINI_API_KEY")).orElse("GEMINI_API_KEY");
+        apiKey = "AIzaSyAdivhEDcq506F6srqy_WeVA7YfTK_uV_M";
         log.info("GEMINI_API_KEY is {}",apiKey);
     }
 
@@ -117,13 +128,30 @@ public class GeminiImageService {
         return handleApiResponse(response.getBody());
     }
 
-    // === Generate Fashion Model Image ===
-    public String generateModelImage(MultipartFile userImage , String apiKey) throws IOException {
-        Assert.notNull(apiKey,"apiKey cannot be null");
+    private String sendRequest(List<Map<String, Object>> parts, String model) {
+        String url = ENDPOINT + (model != null ? model : MODEL) + ":generateContent?key=" + apiKey;
 
-        KeyItem key = keyItem.stream().filter(z -> z.getKey().equals(apiKey)).findFirst().orElseThrow();
-        Assert.isTrue(key.getCountDown() > 0 , "Out of limit token");
-        log.info("Going to generateModelImage for api key - {}",apiKey);
+        Map<String, Object> contents = new HashMap<>();
+        contents.put("parts", parts);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("contents", contents);
+//        body.put("generationConfig", Map.of("responseModalities", List.of("TEXT")));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, request, Map.class);
+        return handleApiResponse(response.getBody());
+    }
+
+    @Transactional
+    public String generateModelImage(MultipartFile userImage , String email) throws IOException {
+        return generateModelImage(userImage);
+    }
+
+    public String generateModelImage(MultipartFile userImage) throws IOException {
 
         Map<String, Object> userImagePart = fileToInlineData(userImage);
         String prompt = """
@@ -136,11 +164,75 @@ public class GeminiImageService {
 
         Map<String, Object> textPart = Map.of("text", prompt);
 
-        int index = keyItem.indexOf(key);
-        key.setCountDown(key.getCountDown() - 1);
-        keyItem.set(index , key);
-
         return sendRequest(List.of(userImagePart, textPart));
+    }
+
+    public String generateContentBaseImage(MultipartFile userImage) throws IOException {
+        log.info("Processing generate content based on image");
+        String mimeType = userImage.getContentType();
+        String base64Data = Base64.getEncoder().encodeToString(userImage.getBytes());
+        Map<String, Object> inlineData = new HashMap<>();
+        inlineData.put("mimeType", mimeType);
+        inlineData.put("data", base64Data);
+
+        Map<String, Object> imagePart = new HashMap<>();
+        imagePart.put("inlineData", inlineData);
+        String textPrompt = "Tạo nội dung tiếp thị hoặc cập nhật trạng thái mạng xã hội ngắn gọn và hấp dẫn dựa trên hình ảnh này. Nêu bật các tính năng hoặc cảm xúc chính được truyền tải.";
+        Map<String, Object> textPart = new HashMap<>();
+        textPart.put("text", textPrompt);
+
+        Map<String, Object> contents = new HashMap<>();
+        contents.put("parts", List.of(imagePart, textPart));
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("contents", List.of(contents));
+
+        // Build headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        // Build URI with API key if required
+        String uri = UriComponentsBuilder.fromHttpUrl("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent")
+                .queryParam("key", apiKey)
+                .toUriString();
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+            );
+
+            // Extract generated text
+            Map<String, Object> body = response.getBody();
+            if (body == null) {
+                throw new RuntimeException("Empty response body");
+            }
+
+            // Gemini responses usually contain something like:
+            // "candidates" -> [ { "content": { "parts": [ { "text": "Generated text here" } ] } } ]
+            List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
+            if (candidates != null && !candidates.isEmpty()) {
+                Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                if (content != null) {
+                    List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
+                    if (parts != null && !parts.isEmpty()) {
+                        Object text = parts.get(0).get("text");
+                        if (text != null) {
+                            return text.toString();
+                        }
+                    }
+                }
+            }
+
+            throw new RuntimeException("No text content generated by the model.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to generate content: " + e.getMessage(), e);
+        }
     }
 
     // === Generate Virtual Try-On ===

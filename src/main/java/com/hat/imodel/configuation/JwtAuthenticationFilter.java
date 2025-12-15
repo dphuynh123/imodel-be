@@ -4,6 +4,7 @@ import com.hat.imodel.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.coyote.BadRequestException;
 import org.springframework.lang.NonNull;
@@ -18,7 +19,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -65,8 +69,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    // ✅ Wrap and inject header BEFORE passing down the chain
+                    HttpServletRequest wrappedRequest = new HttpServletRequestWrapper(request) {
+                        @Override
+                        public String getHeader(String name) {
+                            if ("X-User-Email".equalsIgnoreCase(name)) {
+                                return userEmail;
+                            }
+                            return super.getHeader(name);
+                        }
+
+                        @Override
+                        public Enumeration<String> getHeaderNames() {
+                            ArrayList<String> names = Collections.list(super.getHeaderNames());
+                            if (!names.contains("X-User-Email")) {
+                                names.add("X-User-Email");
+                            }
+                            return Collections.enumeration(names);
+                        }
+
+                        @Override
+                        public Enumeration<String> getHeaders(String name) {
+                            if ("X-User-Email".equalsIgnoreCase(name)) {
+                                return Collections.enumeration(List.of(userEmail));
+                            }
+                            return super.getHeaders(name);
+                        }
+                    };
+
+                    filterChain.doFilter(wrappedRequest, response);
+                    return;
                 }
             }
+
+
 
             filterChain.doFilter(request, response);
         } catch (Exception exception) {

@@ -1,8 +1,13 @@
 package com.hat.imodel.controller;
 
 import com.hat.imodel.service.GeminiImageService;
+
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/api/gemini")
@@ -15,8 +20,13 @@ public class GeminiController {
     }
 
     @PostMapping("/model-image")
-    public String generateModelImage(@RequestParam("file") MultipartFile file, @RequestHeader("x-api-key") String apiKey) throws Exception {
-        return geminiService.generateModelImage(file, apiKey);
+    public String generateModelImage(@RequestHeader(value = "X-User-Email" , required = false) String userEmail , @RequestParam("file") MultipartFile file) throws Exception {
+        return geminiService.generateModelImage(file, userEmail);
+    }
+
+    @PostMapping("/content")
+    public String generateContent(@RequestHeader(value = "X-User-Email" , required = false) String userEmail , @RequestParam("file") MultipartFile file) throws Exception {
+        return geminiService.generateContentBaseImage(file);
     }
 
     @PostMapping("/virtual-tryon")
@@ -34,6 +44,8 @@ public class GeminiController {
     ) throws Exception {
         return geminiService.generatePoseVariation(tryOnImageUrl, poseInstruction);
     }
+
+
 
 
     @GetMapping("/ping")

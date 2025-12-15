@@ -1,6 +1,7 @@
 package com.hat.imodel.controller;
 
-import com.hat.imodel.entity.User;
+import com.hat.imodel.entity.
+        User;
 import com.hat.imodel.model.LoginResponse;
 import com.hat.imodel.repository.UserRepository;
 import com.hat.imodel.service.GoogleAuthService;
@@ -37,12 +38,12 @@ public class AuthController {
         String name = (String) payload.get("name");
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            user = User.builder().username(name).email(email).passwordHash("changeit").build();
+            user = User.builder().email(email).username(name).point(0).passwordHash("changeit").build();
             userRepository.save(user);
         }
         String jwtToken = jwtService.generateToken(user);
 
-        // Create user or generate your own JWT for session
+        
         return LoginResponse.builder().token(jwtToken).expiresIn(jwtService.getExpirationTime()).build();
     }
 
