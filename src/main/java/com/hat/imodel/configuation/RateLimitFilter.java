@@ -23,9 +23,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
     
     // Rate limit: 10 requests per minute per IP
-    private static final int CAPACITY = 10;
-    private static final int TOKENS = 10;
-    private static final Duration REFILL_DURATION = Duration.ofMinutes(1);
+    private static final int CAPACITY = 20;
+    private static final int TOKENS = 20;
+    private static final Duration REFILL_DURATION = Duration.ofSeconds(30);
     
     @Override
     protected void doFilterInternal(

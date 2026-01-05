@@ -5,11 +5,17 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class BusinessIdea {
-    private String title;
-    private String description;
+    public UUID id;
+    public String title;
+    public String description;
+
+    public BusinessIdea() {
+        this.id = UUID.randomUUID();
+    }
 }
